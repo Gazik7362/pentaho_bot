@@ -1,0 +1,21 @@
+# --- Python Junk ---
+__pycache__/
+*.pyc
+
+# Virtual environment
+.venv/
+
+# --- Secrets (NEVER UPLOAD) ---
+config/settings.py
+config/users.json
+
+# --- Personal Editor Config ---
+*.code-workspace
+.vscode/
+
+# --- Clutter / Old Backups ---
+services/carte2.py
+ui/keyboards_old.py
+
+# --- Logs (If any generate in root) ---
+*.log

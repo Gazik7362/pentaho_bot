@@ -1,0 +1,7 @@
+# This creates a list of the libraries we know you are using
+python-telegram-bot
+apscheduler
+requests
+psutil
+vertica-python
+psycopg2-binary
