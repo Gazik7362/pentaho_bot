@@ -41,3 +41,6 @@ USERS_FILE_PATH = os.path.join(os.path.dirname(__file__), 'users.json')
 LOG_LEVEL = logging.INFO
 # Modules to silence (too noisy)
 SILENCED_LOGGERS = ["httpx", "apscheduler"]
+
+# Version Control
+BOT_VERSION = "1.0.0"

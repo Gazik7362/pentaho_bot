@@ -3,8 +3,7 @@ import asyncio
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 from config.settings import TELEGRAM_TOKEN, LOG_LEVEL, SILENCED_LOGGERS
 from services.scheduler import scheduler_service
-
-# ✅ FIX: Added handle_document to the imports
+from config.settings import BOT_VERSION
 from handlers.core import start, handle_callback, handle_text, handle_document
 
 # Logging Setup
@@ -28,5 +27,5 @@ if __name__ == '__main__':
     # ✅ File Handler (.sql only)
     app.add_handler(MessageHandler(filters.Document.FileExtension("sql"), handle_document))
     
-    print("🤖 Orchestrator V2 Running...")
+    print(f"🤖 Orchestrator V{BOT_VERSION} Running...")
     app.run_polling()
