@@ -1,3 +1,6 @@
+import asyncio
+import io
+import html
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ContextTypes
 from services.system import system_service
@@ -11,9 +14,7 @@ from ui.messages import Msg
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from telegram.error import BadRequest
-import asyncio
-import io
-import html
+
 
 USER_STATE = {}
 BOT_FROZEN = False
@@ -375,17 +376,33 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await safe_edit_message(query, text, InlineKeyboardMarkup(kb))
 
     elif action == "PEEK_LOG":
-        name = data[1]
+        job_name = data[1]
+
+        await query.answer("Fetching logs...")
         # Fetch the tail
-        log_content = repo_service.get_log_tail(name)
+        log_content = repo_service.get_log_tail(job_name)
         
+
+        # ✅ FIX: Cut the text if it's too long for Telegram
+        # Telegram limit is 4096. We use 3000 to be safe with HTML tags.
+        if len(log_content) > 3000:
+            # Take the LAST 3000 characters
+            log_content = "..." + log_content[-3000:]
+            
+            # Optional: Try to cut at the first newline to make it look clean
+            first_newline = log_content.find('\n')
+            if first_newline != -1:
+                log_content = "..." + log_content[first_newline+1:]
+
+        safe_log = html.escape(log_content)
+
         # Send as a fresh message (so it doesn't clutter the menu)
         # Using <pre> tag for code formatting
-        msg = f"📜 <b>Log Tail: {name}</b>\n<pre>{html.escape(log_content)}</pre>"
+        text = f"📜 <b>Log Tail: {job_name}</b>\n<pre>{safe_log}</pre>"
         
+        kb = [[InlineKeyboardButton("❌ Close Log", callback_data="DELETE_MSG")]]
         # Delete the menu to "clean up" or just send a new message
-        await query.message.reply_text(msg, parse_mode='HTML')
-        await query.answer()
+        await query.message.reply_text(text, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(kb))
 
     elif action == "STOP_EXEC":
         short_id_target = data[1]
@@ -695,6 +712,10 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         scheduler_service.remove_job(data[2])
         audit_service.log(user_id, "SCHEDULE_DEL", data[2])
         await render_prep_screen(query, int(data[1]), data[2], user_id, is_job=True)
+
+    # Add this small helper too if you don't have it
+    elif action == "DELETE_MSG":
+        await query.message.delete()
 
     elif action == "DASHBOARD":
         # 1. Fetch Stats (Renamed method)

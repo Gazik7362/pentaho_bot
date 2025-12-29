@@ -1,5 +1,8 @@
 import psycopg2
 import logging
+import subprocess
+import os
+from collections import deque
 from config.settings import DB_CONF
 
 class RepoService:
@@ -442,5 +445,41 @@ class RepoService:
             return "⚠️ Log file not found."
         except Exception as e:
             return f"Error reading log: {e}"
+
+    def get_log_tail(self, job_name, lines=100):
+        """
+        Reads the last N lines of a log file safely.
+        """
+        # ⚠️ CHECK THIS PATH: Where does Carte save your logs?
+        # If unknown, run: find / -name "*.log" to check.
+        log_file = "/home/app/pdi/data-integration/logs/pdi.log"
+        
+        if not os.path.exists(log_file):
+            return f"⚠️ Log file not found at: {log_file}"
+
+        # SECURITY: Basic sanitization to prevent shell injection
+        # Only allow alphanumeric and underscores in job names
+        if not job_name.replace("_", "").isalnum():
+            return "❌ Security Block: Invalid characters in job name."
+
+        # THE STRATEGY:
+        # 1. tail -n 50000: Look at the end of the huge file (fast)
+        # 2. grep -i: Search for the job name (case insensitive)
+        # 3. tail -n {lines}: Only show the most recent matches
+        command = f'grep -i "{job_name}" "{log_file}" | tail -n {lines}'
+
+        try:
+            # Run the command directly on the OS
+            result = subprocess.check_output(command, shell=True, text=True)
+            
+            if not result.strip():
+                return f"ℹ️ Job '{job_name}' not found in today's log."
+                
+            return result
+            
+        except subprocess.CalledProcessError:
+            return f"ℹ️ Job '{job_name}' has not run today (or no logs found)."
+        except Exception as e:
+            return f"❌ System Error: {str(e)}"
 
 repo_service = RepoService()

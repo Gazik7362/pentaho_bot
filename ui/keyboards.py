@@ -1,4 +1,5 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from datetime import datetime
 
 class Keyboards:
     @staticmethod
@@ -102,7 +103,7 @@ class Keyboards:
         if 'RUN' in permissions:
             row1.append(InlineKeyboardButton("🚀 Run Now", callback_data=f"RUN|{dir_id}|{job_name}|{'JOB' if is_job else 'TRANS'}"))
         
-        row1.append(InlineKeyboardButton("📜 History", callback_data=f"HISTORY|{dir_id}|{job_name}|{'JOB' if is_job else 'TRANS'}"))
+        row1.append(InlineKeyboardButton("📜 5 Last Runs", callback_data=f"HISTORY|{dir_id}|{job_name}|{'JOB' if is_job else 'TRANS'}"))
         kb.append(row1)
 
         if not is_job:
@@ -122,7 +123,9 @@ class Keyboards:
                     desc = default_schedule['desc']
                     kb.append([InlineKeyboardButton(f"⏰ Start Schedule ({desc})", callback_data=f"SCHED_DEFAULT|{dir_id}|{job_name}")])
                 kb.append([InlineKeyboardButton("📅 Custom Schedule", callback_data=f"SCHED_MENU|{dir_id}|{job_name}")])
-
+        
+        now = datetime.now()
+        kb.append([InlineKeyboardButton(f"📜 Log for {now:%Y-%m-%d} ", callback_data=f"PEEK_LOG|{job_name}")])
         kb.append([InlineKeyboardButton("🔙 Cancel", callback_data=f"OPEN|{dir_id}|0")])
         return InlineKeyboardMarkup(kb)
 
@@ -145,7 +148,7 @@ class Keyboards:
     def execution_controls(dir_id, job_name, is_failure=False):
         kb = []
         if is_failure:
-             kb.append([InlineKeyboardButton("🔄 Restart", callback_data=f"RUN|{dir_id}|{job_name}")])
+            kb.append([InlineKeyboardButton("🔄 Restart", callback_data=f"RUN|{dir_id}|{job_name}")])
         kb.append([InlineKeyboardButton("🔙 Main Menu", callback_data="OPEN|-1|0")])
         return InlineKeyboardMarkup(kb)
 
